@@ -1,3 +1,9 @@
+import gleam/int
+import gleam/list
+import gleam/result
+import gleam/string
+import sgleam/check
+
 //   Análise do problema: O objetivo do trabalho é gerar a tabela de classificação do Brasileirão.
 // Para isso, o usuário passará para o programa uma lista de Strings com os resultados dos jogos
 // realizados, cada uma sendo escrito na forma “Anfitrião Gols Visitante Gols” (O nome dos times e
@@ -12,6 +18,18 @@
 // requisitos é que essa lista de Strings deve ser formatada de forma que as colunas fiquem
 // alinhadas. Nesse sentido, todas as Strings devem ter mesmo tamanho, porém esse tamanho não deve
 // ser fixo, mas sim determinada pelo conteúdo das Strings.
+// 
+// Por exemplo, para a entrada
+// Sao-Paulo 1 Atletico-MG 2
+// Flamengo 2 Palmeiras 1
+// Palmeiras 0 Sao-Paulo 0
+// Atletico-MG 1 Flamengo 2
+// 
+// O seu programa deve produzir a saída
+// Flamengo 6 2 2
+// Atletico-MG 3 1 0
+// Palmeiras 1 0 -1
+// Sao-Paulo 1 0 -1
 
 //   Projeto dos tipos de dados: Para solucionar o problema, é conveniente criar tipos de dados que
 // adequem-se aos requisitos que são apresentados. Dito isso, inicialmente dois deles serão criados
@@ -58,4 +76,109 @@ pub type LinhaErro =
 // Detalhe: Se você chama a função mensagem_erro(Erro), aparece a mensagem do erro para o usuário.
 pub type Erro {
   Erro(cod_erro: CodErro, linha_erro: LinhaErro)
+}
+
+// Gera uma lista com todos os jogos da entrada convertidos para o tipo de dados Jogo. Caso o valor
+// de algum jogo da entrada esteja errado, retorna-se um erro.
+pub fn tabela_jogos(jogos: List(String)) -> Result(List(Jogo), Erro) {
+  jogos
+  |> list.map(converte_jogo(_))
+  |> result.all()
+}
+
+pub fn tabela_jogos_examples() {
+  check.eq(
+    tabela_jogos([
+      "Sao-Paulo 1 Atletico-MG 2", "Flamengo 2 Palmeiras 1",
+      "Palmeiras 0 Sao-Paulo 0",
+    ]),
+    Ok([
+      Jogo("Sao-Paulo", 1, "Atletico-MG", 2),
+      Jogo("Flamengo", 2, "Palmeiras", 1),
+      Jogo("Palmeiras", 0, "Sao-Paulo", 0),
+    ]),
+  )
+  check.eq(
+    tabela_jogos([
+      "Sao-Paulo 1 Atletico-MG", "Flamengo 2 Palmeiras 1",
+      "Palmeiras 0 Sao-Paulo 0",
+    ]),
+    Error(Erro(Erro01, "Sao-Paulo 1 Atletico-MG")),
+  )
+  check.eq(
+    tabela_jogos([
+      "Sao-Paulo 1 Atletico-MG 2", "Flamengo -2 Palmeiras -1",
+      "Palmeiras 0 Sao-Paulo 0",
+    ]),
+    Error(Erro(Erro08, "Flamengo -2 Palmeiras -1")),
+  )
+}
+
+pub fn converte_jogo(jogo_str: String) -> Result(Jogo, Erro) {
+  case string.split(jogo_str, " ") {
+    // campos faltando
+    [] | [_] | [_, _] | [_, _, _] -> Error(Erro(Erro01, jogo_str))
+    [primeiro, segundo, terceiro, quarto] ->
+      case int.parse(segundo), int.parse(quarto) {
+        // ambos os gols não numéricos
+        Error(_), Error(_) -> Error(Erro(Erro05, jogo_str))
+        // gol do anfitrião não numérico
+        Error(_), _ -> Error(Erro(Erro03, jogo_str))
+        // gol do visitante não numérico
+        _, Error(_) -> Error(Erro(Erro04, jogo_str))
+        Ok(segundo_int), Ok(quarto_int) ->
+          case segundo_int, quarto_int {
+            // ambos os gols negativos
+            _, _ if segundo_int < 0 && quarto_int < 0 ->
+              Error(Erro(Erro08, jogo_str))
+            // gol do anfitrião negativo
+            _, _ if segundo_int < 0 -> Error(Erro(Erro06, jogo_str))
+            // gol do visitante não numérico
+            _, _ if quarto_int < 0 -> Error(Erro(Erro07, jogo_str))
+            // perfeito
+            _, _ -> Ok(Jogo(primeiro, segundo_int, terceiro, quarto_int))
+          }
+      }
+    // Campos a mais
+    _ -> Error(Erro(Erro02, jogo_str))
+  }
+}
+
+pub fn converte_jogo_examples() {
+  check.eq(
+    converte_jogo("Sao-Paulo 1 Atletico-MG 2"),
+    Ok(Jogo("Sao-Paulo", 1, "Atletico-MG", 2)),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo 1 Atletico-MG"),
+    Error(Erro(Erro01, "Sao-Paulo 1 Atletico-MG")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo 1 Atle tico MG"),
+    Error(Erro(Erro02, "Sao-Paulo 1 Atle tico MG")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo a Atletico-MG 2"),
+    Error(Erro(Erro03, "Sao-Paulo a Atletico-MG 2")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo 1 Atletico-MG a"),
+    Error(Erro(Erro04, "Sao-Paulo 1 Atletico-MG a")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo a Atletico-MG a"),
+    Error(Erro(Erro05, "Sao-Paulo a Atletico-MG a")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo -2 Atletico-MG 2"),
+    Error(Erro(Erro06, "Sao-Paulo -2 Atletico-MG 2")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo 2 Atletico-MG -2"),
+    Error(Erro(Erro07, "Sao-Paulo 2 Atletico-MG -2")),
+  )
+  check.eq(
+    converte_jogo("Sao-Paulo -1 Atletico-MG -2"),
+    Error(Erro(Erro08, "Sao-Paulo -1 Atletico-MG -2")),
+  )
 }
