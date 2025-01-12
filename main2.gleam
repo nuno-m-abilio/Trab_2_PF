@@ -27,10 +27,10 @@ import sgleam/check
 // Atletico-MG 1 Flamengo 2
 // 
 // O seu programa deve produzir a saída
-// Flamengo 6 2 2
-// Atletico-MG 3 1 0
-// Palmeiras 1 0 -1
-// Sao-Paulo 1 0 -1
+// Flamengo     6  2   2
+// Atletico-MG  3  1   0
+// Palmeiras    1  0  -1
+// Sao-Paulo    1  0  -1
 
 //   Projeto dos tipos de dados: Para solucionar o problema, é conveniente criar tipos de dados que
 // adequem-se aos requisitos que são apresentados. Dito isso, inicialmente dois deles serão criados
@@ -82,21 +82,27 @@ pub type Erro {
 // Projeto de funções principais e auxiliares para resolução do problema:
 
 // Gera a tabela de classificação do Brasileirão. Tomando como base os resultados dos jogos, coloca
-// os times (primeira coluna) em ordem decerescente de "Número de Pontos" (segunda coluna) e, em
+// os times (primeira coluna) em ordem decreescente de "Número de Pontos" (segunda coluna) e, em
 // caso de empates, usando os critérios "Número de Vitórias" (terceira coluna), "Saldo de Gols"
 // (quarta coluna) e "Ordem Alfabética". Caso o valor de algum jogo da entrada esteja errado,
 // retorna-se um erro.
 pub fn classificacao_brasileirao(
   jogos: List(String),
 ) -> Result(List(String), Erro) {
-  case tabela_jogos(jogos) {
-    Ok(x) ->
-      x
-      |> tabela_class()
-      |> str_tabela_class()
-      |> Ok()
-    Error(x) -> Error(x)
-  }
+  use x <- result.try(tabela_jogos(jogos))
+  x
+  |> tabela_class()
+  |> str_tabela_class()
+  |> Ok()
+  // // Implementação sem use
+  // case tabela_jogos(jogos) {
+  //   Ok(x) ->
+  //     x
+  //     |> tabela_class()
+  //     |> str_tabela_class()
+  //     |> Ok()
+  //   Error(x) -> Error(x)
+  // }
 }
 
 pub fn classificacao_brasileirao_examples() {
@@ -162,10 +168,10 @@ pub fn classificacao_brasileirao_examples() {
       "palmeiras 2 santos 1", "vasco 3 fluminense 3", "flamengo 1 corinthians 0",
     ]),
     Ok([
-      "     flamengo  20  6   9", "    palmeiras  19  6  11",
-      "   fluminense  13  3   2", "  corinthians   9  3  -3",
-      "       santos   7  1  -3", "        vasco   7  1  -6",
-      "    sao-paulo   6  1  -2", "     botafogo   4  0  -8",
+      " flamengo     20  6   9", "palmeiras    19  6  11",
+      " fluminense   13  3   2", "corinthians   9  3  -3",
+      " santos        7  1  -3", "vasco         7  1  -6",
+      " sao-paulo     6  1  -2", "botafogo      4  0  -8",
     ]),
   )
 }
@@ -206,10 +212,14 @@ pub fn tabela_jogos_examples() {
   )
 }
 
+// Converte um resultado de jogo na forma de String para a formatação no tipo Jogo, caso a String
+// tenha a representação correta. Caso contrário, retorna-se o erro correspondente. Obs: Nesta
+// função, não achei sentido em usar o use, pois é necessário mudar o tipo de erro de Nil para Erro
 pub fn converte_jogo(jogo_str: String) -> Result(Jogo, Erro) {
   case string.split(jogo_str, " ") {
     // campos faltando
     [] | [_] | [_, _] | [_, _, _] -> Error(Erro(Erro01, jogo_str))
+    // número correto de campos
     [primeiro, segundo, terceiro, quarto] ->
       case int.parse(segundo), int.parse(quarto) {
         // ambos os gols não numéricos
@@ -218,6 +228,7 @@ pub fn converte_jogo(jogo_str: String) -> Result(Jogo, Erro) {
         Error(_), _ -> Error(Erro(Erro03, jogo_str))
         // gol do visitante não numérico
         _, Error(_) -> Error(Erro(Erro04, jogo_str))
+        // ambos os gols numéricos
         Ok(segundo_int), Ok(quarto_int) ->
           case segundo_int, quarto_int {
             // ambos os gols negativos
@@ -275,7 +286,8 @@ pub fn converte_jogo_examples() {
   )
 }
 
-// Produz uma tabela de classificação ordenada a partir de uma lista de jogos verificada como sem erros.
+// Produz uma tabela de classificação ordenada a partir de uma lista de jogos verificada como sem
+// erros.
 pub fn tabela_class(jogos: List(Jogo)) -> List(Linha) {
   jogos
   |> tabela_efeitos()
@@ -341,7 +353,8 @@ pub fn efeitos_jogo_examples() {
   ])
 }
 
-// Mostra o efeito que um placar teve pare para um time indicado.
+// Mostra o efeito que um placar teve pare para um time indicado. Isso é representado a partir de
+// uma Linha com os nomes dos times, os pontos ganhados, se gerou 1 ou 0 vitória e o saldo de gols.
 pub fn efeito_unilateral(time: String, gols_time: Int, gols_adv: Int) -> Linha {
   Linha(
     time,
@@ -351,7 +364,7 @@ pub fn efeito_unilateral(time: String, gols_time: Int, gols_adv: Int) -> Linha {
   )
 }
 
-// Não fiz testes para num_pontos, pois a função é bem simples
+// Não fiz testes para efeito_unilateral, pois a função é bem simples
 
 // Indica quantos pontos um time ganhou no jogo. Se ele teve vitória, 3 pontos, se ele teve derrota,
 // 0 pontos, se nem vitória nem derrota, então foi um empate, ou seja, 1 ponto.
@@ -381,9 +394,13 @@ pub fn num_vitorias(vitoria: Bool) -> Int {
 
 // Adiciona um efeito de um jogo na tabela de classificação (não considera ordenação)
 pub fn add_efeito(tabela: List(Linha), efeito: Linha) -> List(Linha) {
+  // Quebrei bastante a cabeça aqui e achei essa solução a mais adequada. Outras possíveis funções,
+  // como list.find_map e list.contains se aproximam do ideal, mas não resolvem 100% a questão
   let a = list.find(tabela, fn(x: Linha) { efeito.time == x.time })
   case a {
+    // Sei que já tem o time na lista e só preciso somar os valores
     Ok(_) -> list.map(tabela, try_add_efeito(efeito, _))
+    // Sei que não tem o time na lista e é necessário adicioná-lo
     _ -> [efeito, ..tabela]
   }
 }
@@ -426,7 +443,7 @@ pub fn try_add_efeito(efeito: Linha, linha: Linha) -> Linha {
 
 // Ordena a lista de linhas em ordem decerescente de "Número de Pontos". Em caso de empates, usa os
 // critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem Alfabética", nessa ordem de
-// prioridade. O método usado é o Insertion sort Sort.
+// prioridade. O método usado é o Insertion Sort.
 pub fn ordena(lst: List(Linha)) -> List(Linha) {
   lst
   |> list.fold_right([], insere_ordenado)
@@ -449,6 +466,9 @@ pub fn ordena_examples() {
   )
 }
 
+// Insere uma linha em uma lista de linhas seguindo a ordem decerescente de "Número de Pontos". Em
+// caso de empates, usa os critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem Alfabética",
+// nessa ordem de prioridade.
 pub fn insere_ordenado(tabela: List(Linha), linha: Linha) -> List(Linha) {
   let try_fold =
     list.fold_right(tabela, #([], False), fn(tupla, i) {
