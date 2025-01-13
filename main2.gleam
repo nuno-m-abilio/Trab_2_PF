@@ -535,22 +535,53 @@ pub fn insere_ordenado_examples() {
   )
 }
 
-// Confere se uma lenha vem antes do pivô conforme os critérios de ordenação. Ressalta-se que os
+// Tenta inserir uma Linha ins atrás de outra linha pos na lista dentro da tupla. Isso só ocorre se
+// ins não vier antes de pos e se o bool dentro da tupla que idica que ins já foi inserida antes
+// for False. Caso isso ocorra, O False da tupla vira True. Caso Contrário, o bool permanece o
+// mesmo e somente pos é acrescentado à lista.
+pub fn try_posicao(
+  tupla: #(List(Linha), Bool),
+  pos: Linha,
+  ins: Linha,
+) -> #(List(Linha), Bool) {
+  let lista = tupla.0
+  let achou = tupla.1
+  case eh_antes(ins, pos) {
+    True -> #([pos, ..lista], False)
+    False ->
+      case achou {
+        False -> #([pos, ins, ..lista], True)
+        True -> #([pos, ..lista], True)
+      }
+  }
+}
+
+// Confere se uma linha vem antes da outra conforme os critérios de ordenação. Ressalta-se que os
 // critérios usados são maior "Número de Pontos", maior "Número de Vitórias", maior "Saldo de
 // Gols" e "Ordem Alfabética", nessa ordem de prioridade.
-pub fn eh_antes(primeiro: Linha, pivo: Linha) -> Bool {
-  { primeiro.pts > pivo.pts }
-  || { primeiro.pts == pivo.pts && primeiro.vit > pivo.vit }
+pub fn eh_antes(a: Linha, b: Linha) -> Bool {
+  // { a.pts > b.pts }
+  // || { a.pts == b.pts && a.vit > b.vit }
+  // || { a.pts == b.pts && a.vit == b.vit && a.sg > b.sg }
+  // || {
+  //   a.pts == b.pts
+  //   && a.vit == b.vit
+  //   && a.sg == b.sg
+  //   && string.compare(a.time, b.time) == order.Lt
+  // }
+  { a.pts > b.pts }
   || {
-    primeiro.pts == pivo.pts
-    && primeiro.vit == pivo.vit
-    && primeiro.sg > pivo.sg
-  }
-  || {
-    primeiro.pts == pivo.pts
-    && primeiro.vit == pivo.vit
-    && primeiro.sg == pivo.sg
-    && string.compare(primeiro.time, pivo.time) == order.Lt
+    a.pts == b.pts
+    && {
+      a.vit > b.vit
+      || {
+        a.vit == b.vit
+        && {
+          a.sg > b.sg
+          || { a.sg == b.sg && string.compare(a.time, b.time) == order.Lt }
+        }
+      }
+    }
   }
 }
 
