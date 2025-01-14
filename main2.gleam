@@ -94,15 +94,6 @@ pub fn classificacao_brasileirao(
   |> tabela_class()
   |> str_tabela_class()
   |> Ok()
-  // // Implementação sem use
-  // case tabela_jogos(jogos) {
-  //   Ok(x) ->
-  //     x
-  //     |> tabela_class()
-  //     |> str_tabela_class()
-  //     |> Ok()
-  //   Error(x) -> Error(x)
-  // }
 }
 
 pub fn classificacao_brasileirao_examples() {
@@ -112,15 +103,15 @@ pub fn classificacao_brasileirao_examples() {
       "Palmeiras 0 Sao-Paulo 0", "Atletico-MG 1 Flamengo 2",
     ]),
     Ok([
-      "Flamengo     6  2  2   ", "Atletico-MG  3  1  0   ",
-      "Palmeiras    1  0  -1  ", "Sao-Paulo    1  0  -1  ",
+      "Flamengo     6  2   2", "Atletico-MG  3  1   0", "Palmeiras    1  0  -1",
+      "Sao-Paulo    1  0  -1",
     ]),
   )
   check.eq(
     classificacao_brasileirao([
       "A 1 B 1", "C 2 D 1", "A 1 C 3", "B 0 D 0", "A 2 D 1", "B 1 C 4",
     ]),
-    Ok(["C  9  3  6   ", "A  4  1  -1  ", "B  2  0  -3  ", "D  1  0  -2  "]),
+    Ok(["C  9  3   6", "A  4  1  -1", "B  2  0  -3", "D  1  0  -2"]),
   )
   check.eq(
     classificacao_brasileirao([
@@ -168,10 +159,10 @@ pub fn classificacao_brasileirao_examples() {
       "palmeiras 2 santos 1", "vasco 3 fluminense 3", "flamengo 1 corinthians 0",
     ]),
     Ok([
-      " flamengo     20  6   9", "palmeiras    19  6  11",
-      " fluminense   13  3   2", "corinthians   9  3  -3",
-      " santos        7  1  -3", "vasco         7  1  -6",
-      " sao-paulo     6  1  -2", "botafogo      4  0  -8",
+      "flamengo     20  6   9", "palmeiras    19  6  11",
+      "fluminense   13  3   2", "corinthians   9  3  -3",
+      "santos        7  1  -3", "vasco         7  1  -6",
+      "sao-paulo     6  1  -2", "botafogo      4  0  -8",
     ]),
   )
 }
@@ -180,7 +171,7 @@ pub fn classificacao_brasileirao_examples() {
 // de algum jogo da entrada esteja errado, retorna-se um erro.
 pub fn tabela_jogos(jogos: List(String)) -> Result(List(Jogo), Erro) {
   jogos
-  |> list.map(converte_jogo(_))
+  |> list.map(converte_jogo)
   |> result.all()
 }
 
@@ -230,16 +221,15 @@ pub fn converte_jogo(jogo_str: String) -> Result(Jogo, Erro) {
         _, Error(_) -> Error(Erro(Erro04, jogo_str))
         // ambos os gols numéricos
         Ok(segundo_int), Ok(quarto_int) ->
-          case segundo_int, quarto_int {
+          case segundo_int < 0 {
             // ambos os gols negativos
-            _, _ if segundo_int < 0 && quarto_int < 0 ->
-              Error(Erro(Erro08, jogo_str))
+            True if quarto_int < 0 -> Error(Erro(Erro08, jogo_str))
             // gol do anfitrião negativo
-            _, _ if segundo_int < 0 -> Error(Erro(Erro06, jogo_str))
+            True -> Error(Erro(Erro06, jogo_str))
             // gol do visitante não numérico
-            _, _ if quarto_int < 0 -> Error(Erro(Erro07, jogo_str))
+            False if quarto_int < 0 -> Error(Erro(Erro07, jogo_str))
             // perfeito
-            _, _ -> Ok(Jogo(primeiro, segundo_int, terceiro, quarto_int))
+            _ -> Ok(Jogo(primeiro, segundo_int, terceiro, quarto_int))
           }
       }
     // Campos a mais
@@ -371,12 +361,9 @@ pub fn efeito_unilateral(time: String, gols_time: Int, gols_adv: Int) -> Linha {
 pub fn num_pontos(vitoria: Bool, derrota: Bool) -> Int {
   case vitoria {
     True -> 3
-    False ->
-      case derrota {
-        True -> 0
-        // Empate
-        False -> 1
-      }
+    False if derrota -> 0
+    // Empate
+    _ -> 1
   }
 }
 
@@ -472,16 +459,7 @@ pub fn ordena_examples() {
 pub fn insere_ordenado(tabela: List(Linha), linha: Linha) -> List(Linha) {
   let try_fold =
     list.fold_right(tabela, #([], False), fn(tupla, i) {
-      let lista = tupla.0
-      let achou = tupla.1
-      case eh_antes(linha, i) {
-        True -> #([i, ..lista], False)
-        False ->
-          case achou {
-            False -> #([i, linha, ..lista], True)
-            True -> #([i, ..lista], True)
-          }
-      }
+      try_posicao(tupla, i, linha)
     })
   case try_fold.1 {
     True -> try_fold.0
@@ -535,24 +513,24 @@ pub fn insere_ordenado_examples() {
   )
 }
 
-// Tenta inserir uma Linha ins atrás de outra linha pos na lista dentro da tupla. Isso só ocorre se
-// ins não vier antes de pos e se o bool dentro da tupla que idica que ins já foi inserida antes
-// for False. Caso isso ocorra, O False da tupla vira True. Caso Contrário, o bool permanece o
-// mesmo e somente pos é acrescentado à lista.
+// Tenta inserir uma Linha ins (inserindo) atrás de outra linha pos (posição) na lista dentro da 
+// tupla. Isso só ocorre se ins não vier antes de pos e se o bool dentro da tupla que idica que ins
+// já foi inserida antes for False. Caso isso ocorra, O False da tupla vira True. Caso Contrário, o
+// bool permanece o mesmo e somente pos é acrescentado à lista.
 pub fn try_posicao(
   tupla: #(List(Linha), Bool),
   pos: Linha,
   ins: Linha,
 ) -> #(List(Linha), Bool) {
   let lista = tupla.0
-  let achou = tupla.1
+  let inserido = tupla.1
   case eh_antes(ins, pos) {
+    // ins vem antes dna tabela
     True -> #([pos, ..lista], False)
-    False ->
-      case achou {
-        False -> #([pos, ins, ..lista], True)
-        True -> #([pos, ..lista], True)
-      }
+    // ins vem depois na tabela, mas já foi inserido
+    False if inserido -> #([pos, ..lista], True)
+    // ins vem depois na tabela, mas não foi inserido ainda
+    _ -> #([pos, ins, ..lista], True)
   }
 }
 
@@ -560,15 +538,6 @@ pub fn try_posicao(
 // critérios usados são maior "Número de Pontos", maior "Número de Vitórias", maior "Saldo de
 // Gols" e "Ordem Alfabética", nessa ordem de prioridade.
 pub fn eh_antes(a: Linha, b: Linha) -> Bool {
-  // { a.pts > b.pts }
-  // || { a.pts == b.pts && a.vit > b.vit }
-  // || { a.pts == b.pts && a.vit == b.vit && a.sg > b.sg }
-  // || {
-  //   a.pts == b.pts
-  //   && a.vit == b.vit
-  //   && a.sg == b.sg
-  //   && string.compare(a.time, b.time) == order.Lt
-  // }
   { a.pts > b.pts }
   || {
     a.pts == b.pts
@@ -604,50 +573,6 @@ pub fn eh_antes_examples() {
   )
 }
 
-pub fn maiores_tamanhos(lista: List(Linha)) -> List(Int) {
-  lista
-  |> list.map(tamanhos)
-  |> list.fold([0, 0, 0, 0], mapeia2_max)
-}
-
-pub fn maiores_tamanhos_examples() {
-  check.eq(
-    maiores_tamanhos([
-      Linha("Flamengo", 10, 2, 2),
-      Linha("Atletico-MG", 3, 1, 0),
-      Linha("Palmeiras", 1, 0, -1),
-      Linha("Sao-Paulo", 1, 0, -1),
-    ]),
-    [11, 2, 1, 2],
-  )
-}
-
-// Combina duas listas em uma usando a função int.max. Dessa forma, comparando qual o maior entre o
-// nº elemento da 1ª lista com o nº elemento da 2ª lista, gera-se uma nova lista.
-pub fn mapeia2_max(a: List(Int), b: List(Int)) {
-  list.map2(a, b, int.max)
-}
-
-// // Combina duas listas em uma usando a função stirng.pad_end.
-// pub fn mapeia2_pad_end(a: List(String), b: List(Int)) -> List(String) {
-//   list.map2(a, b, pad_end)
-// }
-
-pub fn pad_right(a: String, b: Int) -> String {
-  string.pad_right(a, b + 2, " ")
-}
-
-pub fn pad_left(a: String, b: Int) -> String {
-  string.pad_left(a, b + 2, " ")
-}
-
-// Gera os tamanhos das strings respectivas de cada elemento de uma linha.
-pub fn tamanhos(linha: Linha) -> List(Int) {
-  linha
-  |> linha_lista_str()
-  |> list.map(string.length)
-}
-
 // Transforma uma lista de Linhas em uma lista de Strings
 pub fn str_tabela_class(lista: List(Linha)) -> List(String) {
   let tam_max = maiores_tamanhos(lista)
@@ -663,46 +588,123 @@ pub fn str_tabela_class_examples() {
       Linha("Sao-Paulo", 1, 0, -1),
     ]),
     [
-      "Flamengo     6  2  2   ", "Atletico-MG  3  1  0   ",
-      "Palmeiras    1  0  -1  ", "Sao-Paulo    1  0  -1  ",
+      "Flamengo     6  2   2", "Atletico-MG  3  1   0", "Palmeiras    1  0  -1",
+      "Sao-Paulo    1  0  -1",
     ],
   )
 }
 
-// Transforma uma Linha em uma String
-pub fn str_linha(linha: Linha, tam_max: List(Int)) -> String {
-  linha
-  |> linha_lista_str()
-  |> list.map2(tam_max, pad_right)
-  |> list.fold("", string.append)
+// Define os maiores tamanhos de cada uma das colunas de uma lista de linhas
+pub fn maiores_tamanhos(lista: List(Linha)) -> List(Int) {
+  lista
+  |> list.map(tamanhos)
+  // Para cada lista de tamanhos da lista de linhas, combina ela com a do acumulador usando o fold
+  // com a função list.map2 com int.max. Dessa forma, comparando qual o maior entre o nº elemento
+  // da 1ª lista com o nº elemento da 2ª lista, gera-se uma nova lista.
+  |> list.fold([0, 0, 0, 0], fn(acc, i) { list.map2(acc, i, int.max) })
 }
 
-// // Transforma uma Linha em uma String
-// pub fn str_linha(linha: Linha, tam_max: List(Int)) -> String {
-//   case linha_lista_str(linha), tam_max {
-//     [p, ..r], [j, ..k] ->
-//       list.fold(
-//         [pad_right(p, j), ..list.map2(k, pad_left(r))],
-//         "",
-//         string.append,
-//       )
-//     _, _ -> panic
-//   }
-// }
+pub fn maiores_tamanhos_examples() {
+  check.eq(
+    maiores_tamanhos([
+      Linha("Flamengo", 10, 2, 2),
+      Linha("Atletico-MG", 3, 1, 0),
+      Linha("Palmeiras", 1, 0, -1),
+      Linha("Sao-Paulo", 1, 0, -1),
+    ]),
+    [11, 2, 1, 2],
+  )
+}
+
+// Gera os tamanhos das strings respectivas de cada elemento de uma linha.
+pub fn tamanhos(linha: Linha) -> List(Int) {
+  linha
+  |> linha_str_discreta()
+  |> list.map(string.length)
+}
+
+// Transforma cada elemento de uma linha individualmente em Strings
+pub fn linha_str_discreta(linha: Linha) -> List(String) {
+  [linha.time, ..list.map([linha.pts, linha.vit, linha.sg], int.to_string)]
+}
+
+// Transforma uma Linha em uma String padronizada com o tamanho máximo de cada espaço
+pub fn str_linha(linha: Linha, tam_max: List(Int)) -> String {
+  case tam_max {
+    [max_time, ..max_resto] ->
+      [
+        string.pad_right(linha.time, max_time, " "),
+        ..[linha.pts, linha.vit, linha.sg]
+        |> list.map(int.to_string)
+        |> list.map2(max_resto, fn(str, to) {
+          string.pad_left(str, to + 2, " ")
+        })
+      ]
+      |> list.fold("", string.append)
+    // Não consegui achar uma forma de retirar esse panic, a questão é que tam_max sempre é passada
+    // como uma lista de 4 elementos, mas eu não consigo garntir isso aqui dentro
+    _ -> panic
+  }
+}
 
 pub fn str_linha_examples() {
   check.eq(
     str_linha(Linha("Flamengo", 6, 2, 2), [10, 1, 1, 2]),
-    "Flamengo    6  2  2   ",
+    "Flamengo    6  2   2",
   )
 }
 
-// Transforma cada elemento de i=uma linha individualmente em Strings
-pub fn linha_lista_str(linha: Linha) -> List(String) {
-  [
-    linha.time,
-    int.to_string(linha.pts),
-    int.to_string(linha.vit),
-    int.to_string(linha.sg),
-  ]
+// EXTRA: Função que retorna a mensagem de erro para o usuário
+
+// Retorna a mensagem de erro que o usuário receberia ao obter um erro chamando a função principal.
+// Essa mensagem informa o código do erro, o motivo do erro e a linha que o causou.
+pub fn mensagem_erro(erro: Erro) -> String {
+  case erro.cod_erro {
+    Erro01 ->
+      "Erro #01: A formatação do jogo "
+      <> erro.linha_erro
+      <> " está incorreta. Há menos que 4 campos de informações"
+    Erro02 ->
+      "Erro #02: A formatação do jogo "
+      <> erro.linha_erro
+      <> " está incorreta. Há mais que 4 campos de informações"
+    Erro03 ->
+      "Erro #03: Valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. O segundo campo, que deveria representar um valor numérico, aqui não"
+      <> " o faz."
+    Erro04 ->
+      "Erro #04: Valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. O quarto campo, que deveria representar um valor numérico, aqui não "
+      <> "o faz."
+    Erro05 ->
+      "Erro #05: Os valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. Tanto o segundo quanto o quarto campo, que deveriam representar valo"
+      <> "res numéricos, aqui não o fazem."
+    Erro06 ->
+      "Erro #06: Valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. O segundo campo, que deveria representar um inteiro positivo, aqui n"
+      <> "ão o faz."
+    Erro07 ->
+      "Erro #07: Valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. O quarto campo, que deveria representar um inteiro positivo, aqui nã"
+      <> "o o faz."
+    Erro08 ->
+      "Erro #08: Os valores do jogo "
+      <> erro.linha_erro
+      <> " estão incoerentes. Tanto o segundo quanto o quarto campo, que deveriam representar intei"
+      <> "ros positivos, aqui não o fazem."
+  }
+}
+
+pub fn mensagem_erro_examples() {
+  check.eq(
+    mensagem_erro(Erro(Erro01, "Sao-Paulo 1 Atletico-MG")),
+    "Erro #01: A formatação do jogo Sao-Paulo 1 Atletico-MG está incorreta. Há menos que 4 campos "
+      <> "de informações",
+  )
 }
