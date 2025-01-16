@@ -630,27 +630,37 @@ pub fn linha_str_discreta(linha: Linha) -> List(String) {
 
 // Transforma uma Linha em uma String padronizada com o tamanho máximo de cada espaço
 pub fn str_linha(linha: Linha, tam_max: List(Int)) -> String {
-  case tam_max {
-    [max_time, ..max_resto] ->
-      [
-        string.pad_right(linha.time, max_time, " "),
-        ..[linha.pts, linha.vit, linha.sg]
-        |> list.map(int.to_string)
-        |> list.map2(max_resto, fn(str, to) {
-          string.pad_left(str, to + 2, " ")
-        })
-      ]
-      |> list.fold("", string.append)
-    // Não consegui achar uma forma de retirar esse panic, a questão é que tam_max sempre é passada
-    // como uma lista de 4 elementos, mas eu não consigo garntir isso aqui dentro
-    _ -> panic
-  }
+  [linha.time, ..list.map([linha.pts, linha.vit, linha.sg], int.to_string)]
+  |> list.map2(tam_max, fn(str, to) { special_pad(str, to) })
+  |> list.fold("", string.append)
 }
 
 pub fn str_linha_examples() {
   check.eq(
     str_linha(Linha("Flamengo", 6, 2, 2), [10, 1, 1, 2]),
     "Flamengo    6  2   2",
+  )
+}
+
+// Faz pad_left com " " até o tamanho {to + 2} para Strings str que representam números e pad_right
+// com " "até o tamanho to para as que não representam. Considerando os padrões dos parâmetros do
+// map2 da função str_linha
+pub fn special_pad(str, to) -> String {
+  case int.parse(str) {
+    Ok(_) -> string.pad_left(str, to + 2, " ")
+    Error(_) -> string.pad_right(str, to, " ")
+  }
+}
+
+pub fn special_pad_examples() {
+  check.eq(
+    [
+      special_pad("flamengo", 10),
+      special_pad("6", 1),
+      special_pad("2", 1),
+      special_pad("2", 2),
+    ],
+    ["flamengo  ", "  6", "  2", "   2"],
   )
 }
 
