@@ -81,11 +81,11 @@ pub type Erro {
 
 // Projeto de funções principais e auxiliares para resolução do problema:
 
-// Gera a tabela de classificação do Brasileirão. Tomando como base os resultados dos jogos, coloca
-// os times (primeira coluna) em ordem decreescente de "Número de Pontos" (segunda coluna) e, em
-// caso de empates, usando os critérios "Número de Vitórias" (terceira coluna), "Saldo de Gols"
-// (quarta coluna) e "Ordem Alfabética". Caso o valor de algum jogo da entrada esteja errado,
-// retorna-se um erro.
+// Gera a tabela de classificação do Brasileirão com formatação alinhada. Tomando como base os
+// resultados dos "jogos", coloca os times (primeira coluna) em ordem decreescente de "Número de
+// Pontos" (segunda coluna) e, em caso de empates, usando os critérios "Número de Vitórias"
+// (terceira coluna), "Saldo de Gols" (quarta coluna) e "Ordem Alfabética". Caso o valor de algum
+// jogo da entrada esteja errado, retorna-se um erro.
 pub fn classificacao_brasileirao(
   jogos: List(String),
 ) -> Result(List(String), Erro) {
@@ -167,8 +167,8 @@ pub fn classificacao_brasileirao_examples() {
   )
 }
 
-// Gera uma lista com todos os jogos da entrada convertidos para o tipo de dados Jogo. Caso o valor
-// de algum jogo da entrada esteja errado, retorna-se um erro.
+// Gera uma lista com todos os "jogos" da entrada convertidos para o tipo de dados Jogo. Caso o
+// valor de algum jogo da entrada esteja errado, retorna-se um erro.
 pub fn tabela_jogos(jogos: List(String)) -> Result(List(Jogo), Erro) {
   jogos
   |> list.map(converte_jogo)
@@ -203,9 +203,10 @@ pub fn tabela_jogos_examples() {
   )
 }
 
-// Converte um resultado de jogo na forma de String para a formatação no tipo Jogo, caso a String
-// tenha a representação correta. Caso contrário, retorna-se o erro correspondente. Obs: Nesta
-// função, não achei sentido em usar o use, pois é necessário mudar o tipo de erro de Nil para Erro
+// Converte um resultado de jogo "jogo_str" na forma de String para a formatação no tipo Jogo, caso
+// a String tenha a representação correta. Caso contrário, retorna-se o erro correspondente. Obs:
+// Nesta função, não achei sentido em usar o use, pois é necessário mudar o tipo de erro de Nil
+// para Erro
 pub fn converte_jogo(jogo_str: String) -> Result(Jogo, Erro) {
   case string.split(jogo_str, " ") {
     // campos faltando
@@ -276,8 +277,8 @@ pub fn converte_jogo_examples() {
   )
 }
 
-// Produz uma tabela de classificação ordenada a partir de uma lista de jogos verificada como sem
-// erros.
+// Produz uma tabela de classificação ordenada a partir de uma lista de jogos "jogos" verificada
+// como sem erros.
 pub fn tabela_class(jogos: List(Jogo)) -> List(Linha) {
   jogos
   |> tabela_efeitos()
@@ -302,7 +303,7 @@ pub fn tabela_class_examples() {
   )
 }
 
-// Retorna todos os efeitos causados pelos jogos de uma lista de jogos.
+// Retorna todos os efeitos causados pelos jogos de uma lista de jogos "tabela_jogos".
 pub fn tabela_efeitos(tabela_jogos: List(Jogo)) -> List(Linha) {
   tabela_jogos
   |> list.flat_map(efeitos_jogo)
@@ -326,7 +327,7 @@ pub fn tabela_efeitos_examples() {
   )
 }
 
-// Retorna uma lista com os efeitos que o resultado de Jogo afeta em cada time que participou.
+// Retorna uma lista com os efeitos que o resultado de "jogo" afeta em cada time que participou.
 // A lista contém duas Linhas com os nomes dos times, os pontos ganhados, se gerou 1 ou 0 vitórias
 // e o saldo de gols.
 pub fn efeitos_jogo(jogo: Jogo) -> List(Linha) {
@@ -343,8 +344,9 @@ pub fn efeitos_jogo_examples() {
   ])
 }
 
-// Mostra o efeito que um placar teve pare para um time indicado. Isso é representado a partir de
-// uma Linha com os nomes dos times, os pontos ganhados, se gerou 1 ou 0 vitória e o saldo de gols.
+// Mostra o efeito que um placar teve pare para um "time" indicado a partir dos gols prós
+// "gols_time" e contras "gols_adv". Isso é representado a partir de uma Linha com os nomes dos
+// times, os pontos ganhados, se gerou 1 ou 0 vitória e o saldo de gols.
 pub fn efeito_unilateral(time: String, gols_time: Int, gols_adv: Int) -> Linha {
   Linha(
     time,
@@ -356,8 +358,8 @@ pub fn efeito_unilateral(time: String, gols_time: Int, gols_adv: Int) -> Linha {
 
 // Não fiz testes para efeito_unilateral, pois a função é bem simples
 
-// Indica quantos pontos um time ganhou no jogo. Se ele teve vitória, 3 pontos, se ele teve derrota,
-// 0 pontos, se nem vitória nem derrota, então foi um empate, ou seja, 1 ponto.
+// Indica quantos pontos um time ganhou no jogo. Se ele teve "vitória", 3 pontos, se ele teve
+// "derrota", 0 pontos, se nem "vitória" nem "derrota", então foi um empate, ou seja, 1 ponto.
 pub fn num_pontos(vitoria: Bool, derrota: Bool) -> Int {
   case vitoria {
     True -> 3
@@ -369,7 +371,7 @@ pub fn num_pontos(vitoria: Bool, derrota: Bool) -> Int {
 
 // Não fiz testes para num_pontos, pois a função é bem simples
 
-// Indica se o time deve 1 ou 0 vitórias em um jogo. Parece besta, mas é útil.
+// Indica se o time deve 1 ou 0 "vitórias" em um jogo. Parece besta, mas é útil.
 pub fn num_vitorias(vitoria: Bool) -> Int {
   case vitoria {
     True -> 1
@@ -379,7 +381,7 @@ pub fn num_vitorias(vitoria: Bool) -> Int {
 
 // Não fiz testes para num_pontos, pois a função é bem simples
 
-// Adiciona um efeito de um jogo na tabela de classificação (não considera ordenação)
+// Adiciona um "efeito" de um jogo na "tabela" de classificação (não considera ordenação)
 pub fn add_efeito(tabela: List(Linha), efeito: Linha) -> List(Linha) {
   // Quebrei bastante a cabeça aqui e achei essa solução a mais adequada. Outras possíveis funções,
   // como list.find_map e list.contains se aproximam do ideal, mas não resolvem 100% a questão
@@ -413,7 +415,7 @@ pub fn add_efeito_examples() {
   )
 }
 
-// Combina um efeito com uma linha, caso ambos correspondam ao mesmo time. Caso contrário, retorna
+// Combina um "efeito" com uma "linha", caso ambos correspondam ao mesmo time. Caso contrário, retorna
 // a linha sem interfeência do efeito.
 pub fn try_add_efeito(efeito: Linha, linha: Linha) -> Linha {
   case efeito.time == linha.time {
@@ -428,9 +430,9 @@ pub fn try_add_efeito(efeito: Linha, linha: Linha) -> Linha {
   }
 }
 
-// Ordena a lista de linhas em ordem decerescente de "Número de Pontos". Em caso de empates, usa os
-// critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem Alfabética", nessa ordem de
-// prioridade. O método usado é o Insertion Sort.
+// Ordena a lista "lst" de linhas em ordem decerescente de "Número de Pontos". Em caso de empates,
+// usa os critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem Alfabética", nessa ordem de
+// prioridade. O método usado é o Insertion Sort (porém com todos os casos com O(n^2)).
 pub fn ordena(lst: List(Linha)) -> List(Linha) {
   lst
   |> list.fold_right([], insere_ordenado)
@@ -453,16 +455,18 @@ pub fn ordena_examples() {
   )
 }
 
-// Insere uma linha em uma lista de linhas seguindo a ordem decerescente de "Número de Pontos". Em
-// caso de empates, usa os critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem Alfabética",
-// nessa ordem de prioridade.
+// Insere uma "linha" em uma lista de linhas "tabela" seguindo a ordem decerescente de "Número de
+// Pontos". Em caso de empates, usa os critérios "Número de Vitórias" , "Saldo de Gols" e "Ordem
+// Alfabética", nessa ordem de prioridade.
 pub fn insere_ordenado(tabela: List(Linha), linha: Linha) -> List(Linha) {
   let try_fold =
     list.fold_right(tabela, #([], False), fn(tupla, i) {
       try_posicao(tupla, i, linha)
     })
   case try_fold.1 {
+    // Linha já inserida
     True -> try_fold.0
+    // Linha não foi inserida ainda, pois é a maior até o momento
     False -> [linha, ..tabela]
   }
 }
@@ -513,10 +517,10 @@ pub fn insere_ordenado_examples() {
   )
 }
 
-// Tenta inserir uma Linha ins (inserindo) atrás de outra linha pos (posição) na lista dentro da 
-// tupla. Isso só ocorre se ins não vier antes de pos e se o bool dentro da tupla que idica que ins
-// já foi inserida antes for False. Caso isso ocorra, O False da tupla vira True. Caso Contrário, o
-// bool permanece o mesmo e somente pos é acrescentado à lista.
+// Tenta inserir uma Linha "ins" (inserindo) atrás de outra linha "pos" (posição) na lista do
+// acumulador "tupla". Isso só ocorre se ins não vier antes de pos e se o bool dentro da tupla que
+// idica que ins já foi inserida antes for False. Caso isso ocorra, O False da tupla vira True.
+// Caso Contrário, o bool permanece o mesmo e somente pos é acrescentado à lista.
 pub fn try_posicao(
   tupla: #(List(Linha), Bool),
   pos: Linha,
@@ -525,7 +529,7 @@ pub fn try_posicao(
   let lista = tupla.0
   let inserido = tupla.1
   case eh_antes(ins, pos) {
-    // ins vem antes dna tabela
+    // ins vem antes na tabela
     True -> #([pos, ..lista], False)
     // ins vem depois na tabela, mas já foi inserido
     False if inserido -> #([pos, ..lista], True)
@@ -534,7 +538,7 @@ pub fn try_posicao(
   }
 }
 
-// Confere se uma linha vem antes da outra conforme os critérios de ordenação. Ressalta-se que os
+// Confere se uma linha "a" vem antes da "b" conforme os critérios de ordenação. Ressalta-se que os
 // critérios usados são maior "Número de Pontos", maior "Número de Vitórias", maior "Saldo de
 // Gols" e "Ordem Alfabética", nessa ordem de prioridade.
 pub fn eh_antes(a: Linha, b: Linha) -> Bool {
@@ -573,7 +577,7 @@ pub fn eh_antes_examples() {
   )
 }
 
-// Transforma uma lista de Linhas em uma lista de Strings
+// Transforma uma "lista" de Linhas em uma lista de Strings
 pub fn str_tabela_class(lista: List(Linha)) -> List(String) {
   let tam_max = maiores_tamanhos(lista)
   list.map(lista, str_linha(_, tam_max))
@@ -594,7 +598,7 @@ pub fn str_tabela_class_examples() {
   )
 }
 
-// Define os maiores tamanhos de cada uma das colunas de uma lista de linhas
+// Define os maiores tamanhos de cada uma das colunas de uma "lista" de linhas
 pub fn maiores_tamanhos(lista: List(Linha)) -> List(Int) {
   lista
   |> list.map(tamanhos)
@@ -616,21 +620,23 @@ pub fn maiores_tamanhos_examples() {
   )
 }
 
-// Gera os tamanhos das strings respectivas de cada elemento de uma linha.
+// Gera os tamanhos das strings respectivas de cada elemento de uma "linha".
 pub fn tamanhos(linha: Linha) -> List(Int) {
   linha
   |> linha_str_discreta()
   |> list.map(string.length)
 }
 
-// Transforma cada elemento de uma linha individualmente em Strings
+// Transforma cada elemento de uma "linha" individualmente em Strings
 pub fn linha_str_discreta(linha: Linha) -> List(String) {
   [linha.time, ..list.map([linha.pts, linha.vit, linha.sg], int.to_string)]
 }
 
-// Transforma uma Linha em uma String padronizada com o tamanho máximo de cada espaço
+// Transforma uma "linha" em uma String padronizada com o tamanho máximo de cada espaço, que está
+// em "tam_max"
 pub fn str_linha(linha: Linha, tam_max: List(Int)) -> String {
-  [linha.time, ..list.map([linha.pts, linha.vit, linha.sg], int.to_string)]
+  linha
+  |> linha_str_discreta()
   |> list.map2(tam_max, fn(str, to) { special_pad(str, to) })
   |> list.fold("", string.append)
 }
@@ -642,10 +648,10 @@ pub fn str_linha_examples() {
   )
 }
 
-// Faz pad_left com " " até o tamanho {to + 2} para Strings str que representam números e pad_right
-// com " "até o tamanho to para as que não representam. Considerando os padrões dos parâmetros do
-// map2 da função str_linha
-pub fn special_pad(str, to) -> String {
+// Faz pad_left com " " até o tamanho {to + 2} para Strings "str" que representam números e
+// pad_right com " " até o tamanho to para as que não representam. Considerando os padrões dos
+// parâmetros do map2 da função str_linha
+pub fn special_pad(str: String, to) -> String {
   case int.parse(str) {
     Ok(_) -> string.pad_left(str, to + 2, " ")
     Error(_) -> string.pad_right(str, to, " ")
@@ -666,8 +672,8 @@ pub fn special_pad_examples() {
 
 // EXTRA: Função que retorna a mensagem de erro para o usuário
 
-// Retorna a mensagem de erro que o usuário receberia ao obter um erro chamando a função principal.
-// Essa mensagem informa o código do erro, o motivo do erro e a linha que o causou.
+// Retorna a mensagem de erro que o usuário receberia ao obter um "erro" chamando a função
+// principal. Essa mensagem informa o código do erro, o motivo do erro e a linha que o causou.
 pub fn mensagem_erro(erro: Erro) -> String {
   case erro.cod_erro {
     Erro01 ->
